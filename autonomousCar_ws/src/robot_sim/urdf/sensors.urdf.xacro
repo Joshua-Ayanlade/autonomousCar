@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!--CAMERA-->
+    <xacro:property name="cam_width" value="0.0038"/>
+    <xacro:arg name="cam_height" default="0.00955"/>  <!--defined as arg because i want to use variable outside this file-->
+    <xacro:property name="cam_height" value="$(arg cam_height)"/>
+    <xacro:property name="cam_length" value="0.10156"/>
+    <xacro:property name="cam_mass" value="1.0"/>
+    
+    
+    <xacro:macro name="rgb_camera" params="parent_link *cam_pose">
+        <link name="rgb_camera_link">
+            <visual>
+                <geometry>
+                    <box size="${cam_width} ${cam_length} ${cam_height}"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            </visual>
+
+            <collision>
+                <geometry>
+                    <box size="${cam_width} ${cam_length} ${cam_height}"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            </collision>
+
+            <inertial>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <mass value="0.0"/>
+                <inertia ixx="${(1/12.0)*cam_mass*(cam_width*cam_width + cam_height*cam_height)}" ixy="0.0" ixz="0.0" 
+                        iyy="${(1/12.0)*cam_mass*(cam_length*cam_length + cam_height*cam_height)}" iyz="0.0" 
+                        izz="${(1/12.0)*cam_mass*(cam_width*cam_width + cam_length*cam_length)}"/>
+            </inertial>
+            
+        </link>
+
+        <joint name="joint_name" type="fixed">
+            <parent link="${parent_link}"/>
+            <child link="rgb_camera_link"/>
+            <xacro:insert_block name="cam_pose"/>  <!-- to pass in the origin tag parameter-->
+
+        </joint>
+
+
+
+        <!--TO SIMULATE RGB CAMERA IN GAZEBO-->
+
+        <gazebo reference="camera_link">
+        <sensor name="camera" type="camera">
+            <always_on>true</always_on>
+            <visualize>true</visualize>
+            <update_rate>30</update_rate>
+            <topic>camera/image_raw</topic>
+            <gz_frame_id>camera_link</gz_frame_id>
+            <camera name="intel_realsense_r200">
+            <camera_info_topic>camera/camera_info</camera_info_topic>
+            <horizontal_fov>1.02974</horizontal_fov>
+            <image>
+                <width>1920</width>
+                <height>1080</height>
+                <format>R8G8B8</format>
+            </image>
+            <clip>
+                <near>0.02</near>
+                <far>300</far>
+            </clip>
+            <noise>
+                <type>gaussian</type>
+                <mean>0.0</mean>
+                <stddev>0.007</stddev>
+            </noise>
+            </camera>
+        </sensor>   
+        </gazebo>
+
+    </xacro:macro>
+
+
+
+
+    <xacro:macro name="rgbd_camera" params="parent_link *cam_pose">
+        <link name="rgbd_camera_link">
+            <visual>
+                <geometry>
+                    <box size="${cam_width} ${cam_length} ${cam_height}"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            </visual>
+
+            <collision>
+                <geometry>
+                    <box size="${cam_width} ${cam_length} ${cam_height}"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            </collision>
+
+            <inertial>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <mass value="0.0"/>
+                <inertia ixx="${(1/12.0)*cam_mass*(cam_width*cam_width + cam_height*cam_height)}" ixy="0.0" ixz="0.0" 
+                        iyy="${(1/12.0)*cam_mass*(cam_length*cam_length + cam_height*cam_height)}" iyz="0.0" 
+                        izz="${(1/12.0)*cam_mass*(cam_width*cam_width + cam_length*cam_length)}"/>
+            </inertial>
+            
+        </link>
+
+        <joint name="joint_name" type="fixed">
+            <parent link="${parent_link}"/>
+            <child link="rgbd_camera_link"/>
+            <xacro:insert_block name="cam_pose"/>  <!-- to pass in the origin tag parameter-->
+        </joint>
+
+
+        <!--Creates camera optical frame to transform from robot frame to optical frame-->
+        <link name="cam_optical_frame"/>
+
+        <joint name="cam_optical_joint" type="fixed">
+            <parent link="rgbd_camera_link"/>
+            <child link="cam_optical_frame"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <!-- <origin xyz="0.0 0.0 0.0" rpy="${-pi/2.0} 0.0 ${-pi/2.0}"/> -->
+        </joint>
+
+
+
+        <!--TO SIMULATE RGBD CAMERA IN GAZEBO-->
+        <gazebo reference="rgbd_camera_link">
+        <sensor name="rgbd_camera" type="rgbd_camera">
+            <always_on>true</always_on>
+            <visualize>true</visualize>
+            <update_rate>30</update_rate>
+            <topic>camera</topic>
+            <gz_frame_id>cam_optical_frame</gz_frame_id>
+            <camera name="intel_realsense_r200">
+            <!-- <camera_info_topic>camera/camera_info</camera_info_topic> -->
+            <horizontal_fov>1.02974</horizontal_fov>
+            <image>
+                <width>640</width>
+                <height>480</height>
+                <format>R8G8B8</format>
+            </image>
+            <clip>
+                <near>0.02</near>
+                <far>10.0</far>
+            </clip>
+            <noise>
+                <type>gaussian</type>
+                <!-- Noise is sampled independently per pixel on each frame.
+                    That pixel's noise value is added to each of its color
+                    channels, which at that point lie in the range [0,1]. -->
+                <mean>0.0</mean>
+                <stddev>0.007</stddev>
+            </noise>
+            </camera>
+        </sensor>   
+        </gazebo>
+
+    </xacro:macro>
+
+
+    
+</robot>

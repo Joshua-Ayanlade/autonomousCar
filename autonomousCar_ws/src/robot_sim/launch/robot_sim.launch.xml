@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+
+    <set_parameter name="use_sim_time" value="true"/>
+    
+    <let name="urdf_file" value="$(find-pkg-share robot_sim)/urdf/robot_sim.urdf.xacro"/>
+    <let name="rviz_config" value="$(find-pkg-share robot_sim)/config/robot_sim.rviz"/>
+    <let name="gz_bridge" value="$(find-pkg-share robot_sim)/config/gazebo_bridge.yaml"/>
+    <let name="world_file" value="/home/josh/autonomousCar_ws/src/world/ionic_world/ionic.sdf"/>
+
+    <node pkg="robot_state_publisher" exec="robot_state_publisher">
+        <param name="robot_description" value="$(command 'xacro $(var urdf_file)')"/>
+    </node>
+
+    <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
+        <arg name="gz_args" value="$(var world_file) -r"/>
+    </include>
+
+    <node pkg="ros_gz_sim" exec="create" args="-topic robot_description"/> 
+
+    <node pkg="ros_gz_bridge" exec="parameter_bridge">
+        <param name="config_file" value="$(var gz_bridge)"/>
+    </node>
+    
+    <!-- <node pkg="ros_gz_image" exec="image_bridge" args="/camera/image_raw"/> -->
+
+    <node pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
+    
+    
+</launch>
