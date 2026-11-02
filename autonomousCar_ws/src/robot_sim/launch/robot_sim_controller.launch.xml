@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="controller_manager" exec="spawner" args="joint_state_broadcaster"/>
+
+    <node pkg="controller_manager" exec="spawner" args="diff_drive_controller"/>
+
+</launch>

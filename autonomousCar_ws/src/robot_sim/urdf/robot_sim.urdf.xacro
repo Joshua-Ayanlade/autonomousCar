@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot_name">
+
+    <xacro:property name="length" value="0.24"/>
+    <xacro:property name="width" value="0.16"/>
+    <xacro:property name="height" value="0.08"/>
+    <xacro:property name="whl_radius" value="0.05"/>
+    <xacro:property name="whl_depth" value="0.02"/>
+    <xacro:property name="whl_offset_y" value="${width/2.0 + whl_depth/2.0}"/>
+    <xacro:property name="whl_offset_x" value="${length/4.0}"/>
+    <xacro:property name="whl_offset_z" value="${height/2.0}"/>
+    <xacro:property name="mass" value="1.0"/>
+    <xacro:property name="cam_offset_x" value="${(length/2.0)-0.01}"/>
+    <xacro:property name="cam_offset_z" value="${(height/2.0)+ ($(arg cam_height)/2.0)}"/>
+
+    <!--ros2 control hardware interface and gazebo controller & sensor plugins-->
+    <xacro:include filename="$(find robot_sim)/urdf/robot_control.gz.xacro"/>
+    <!--common properties file includes color definition-->
+    <xacro:include filename="$(find robot_sim)/urdf/common_properties.xacro"/>
+    <!--include sensor file-->
+    <xacro:include filename="$(find robot_sim)/urdf/sensors.urdf.xacro"/>
+    
+        
+    <link name="base_footprint"/>
+    
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <box size="${length} ${width} ${height}"/>
+            </geometry>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <material name="blue"/>
+        </visual>
+
+        <collision>
+            <geometry>
+                <box size="${length} ${width} ${height}"/>
+            </geometry>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        </collision> 
+
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="${mass}"/>
+            <inertia ixx="${(1/12.0)*mass*(width*width + height*height)}" ixy="0.0" ixz="0.0" 
+                     iyy="${(1/12.0)*mass*(length*length + height*height)}" iyz="0.0" 
+                     izz="${(1/12.0)*mass*(width*width + length*length)}"/>
+        </inertial>
+    </link>
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint"/>
+        <child link="base_link"/>
+        <origin xyz="0.0 0.0 ${whl_offset_z + whl_radius}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+
+
+    <xacro:macro name="wheel_link" params="prefix whl_offset_y whl_offset_x">
+        <link name="${prefix}_link">
+            <visual>
+                <geometry>
+                    <cylinder radius="${whl_radius}" length="${whl_depth}"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <material name="black"/>
+            </visual>
+
+            <collision>
+                <geometry>
+                    <sphere radius="${whl_radius}"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            </collision>
+
+            <inertial>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <mass value="${mass}"/>
+                <inertia ixx="${(1/12.0)*mass*(3*whl_radius*whl_radius + height*height)}" ixy="0.0" ixz="0.0" 
+                         iyy="${(1/12.0)*mass*(3*whl_radius*whl_radius + height*height)}" iyz="0.0" 
+                         izz="${(1/2.0)*mass*(whl_radius * whl_radius)}"/>
+            </inertial>
+            
+        </link>
+
+
+        <joint name="${prefix}_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="${prefix}_link"/>
+            <axis xyz="0 0 1"/>
+            <origin xyz="${-whl_offset_x} ${whl_offset_y} ${-whl_offset_z}" rpy="${-pi/2.0} 0 0"/>
+        </joint>
+        
+    </xacro:macro>
+
+    <xacro:wheel_link prefix="left_rear" whl_offset_y="${whl_offset_y}" whl_offset_x="${whl_offset_x}"/>
+    <xacro:wheel_link prefix="right_rear" whl_offset_y="${-whl_offset_y}" whl_offset_x="${whl_offset_x}"/>
+    <xacro:wheel_link prefix="left_front" whl_offset_y="${whl_offset_y}" whl_offset_x="${-whl_offset_x}"/>
+    <xacro:wheel_link prefix="right_front" whl_offset_y="${-whl_offset_y}" whl_offset_x="${-whl_offset_x}"/>
+
+
+    <!--Attach the camera to the baselink-->
+    <xacro:rgbd_camera parent_link="base_link">
+        <origin xyz="${cam_offset_x} 0.0 ${cam_offset_z}" rpy="0.0 0.0 0.0"/>
+    </xacro:rgbd_camera>
+
+
+</robot>
