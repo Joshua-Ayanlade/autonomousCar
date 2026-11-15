@@ -17,6 +17,12 @@
     </include>
 
 
+    <!--the extended kalman filter-->
+    <node pkg="robot_localization" exec="ekf_node" name="ekf_filter_node">
+        <param from="$(var ekf_config_file)"/>
+    </node>
+
+
     <node pkg="ros_gz_sim" exec="create" args="-topic robot_description"/> 
 
     <node pkg="ros_gz_bridge" exec="parameter_bridge">
