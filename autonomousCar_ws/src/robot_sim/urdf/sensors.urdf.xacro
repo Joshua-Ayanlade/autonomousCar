@@ -46,7 +46,7 @@
 
         <!--TO SIMULATE RGB CAMERA IN GAZEBO-->
 
-        <gazebo reference="camera_link">
+        <gazebo reference="rgb_camera_link">
         <sensor name="camera" type="camera">
             <always_on>true</always_on>
             <visualize>true</visualize>
@@ -155,6 +155,55 @@
             </camera>
         </sensor>   
         </gazebo>
+
+    </xacro:macro>
+
+    <xacro:macro name="imu_sensor" params="parent_link baselink_height">
+        <link name="imu_link"/>
+
+        <joint name="imu_joint" type="fixed">
+            <parent link="${parent_link}"/>
+            <child link="imu_link"/>
+            <origin xyz="0.0 0.0 ${baselink_height/8.0}" rpy="0.0 0.0 0.0"/>
+        </joint>
+        
+        <gazebo reference="imu_link">
+            <sensor name="imu_sensor" type="imu">
+
+                <always_on>true</always_on>
+                <update_rate>100</update_rate>
+                <visualize>false</visualize>
+
+                <!-- Gazebo Transport topic -->
+                <topic>/imu</topic>
+
+                <!-- Reference frame -->
+                <gz_frame_id>imu_link</gz_frame_id>
+
+                <imu>
+                    <enable_orientation>true</enable_orientation>
+                    <!--noise block-->
+                    <angular_velocity>
+                        <x><noise type="gaussian"><mean>0.0</mean><stddev>0.005</stddev></noise></x>
+                        <y><noise type="gaussian"><mean>0.0</mean><stddev>0.005</stddev></noise></y>
+                        <z><noise type="gaussian"><mean>0.0</mean><stddev>0.005</stddev></noise></z>
+                    </angular_velocity>
+                    <linear_acceleration>
+                        <x><noise type="gaussian"><mean>0.0</mean><stddev>0.05</stddev></noise></x>
+                        <y><noise type="gaussian"><mean>0.0</mean><stddev>0.05</stddev></noise></y>
+                        <z><noise type="gaussian"><mean>0.0</mean><stddev>0.05</stddev></noise></z>
+                    </linear_acceleration>
+
+                </imu>
+
+            </sensor>
+        </gazebo>
+
+        
+        <!--gazebo system plugin that handle IMU sensors-->
+        <gazebo>
+            <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+        </gazebo>        
 
     </xacro:macro>
 
